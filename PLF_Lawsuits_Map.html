@@ -98,13 +98,10 @@ header {
   border-left: 3px solid var(--capsaicin);
   display: flex;
   flex-direction: column;
-  transform: translateX(100%);
-  transition: transform .28s cubic-bezier(.4,0,.2,1);
   z-index: 999;
   flex-shrink: 0;
   box-shadow: -4px 0 20px rgba(9,12,11,.15);
 }
-#sidebar.open { transform: translateX(0); }
 
 #sidebar-header {
   background: var(--night);
@@ -305,19 +302,49 @@ header {
   font-size: .85rem;
 }
 
-/* ── Instruction hint ── */
-#hint {
-  position: absolute;
-  bottom: 20px;
-  right: 12px;
-  z-index: 1000;
+/* ── Sidebar welcome state ── */
+#sidebar-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 28px;
+  text-align: center;
+}
+#sidebar-welcome .welcome-icon {
+  font-size: 2.8rem;
+  margin-bottom: 18px;
+  opacity: .35;
+}
+#sidebar-welcome h2 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--night);
+  margin-bottom: 12px;
+}
+#sidebar-welcome p {
+  font-family: 'Work Sans', sans-serif;
+  font-size: .85rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+#sidebar-welcome .welcome-divider {
+  width: 40px;
+  height: 3px;
+  background: var(--capsaicin);
+  border-radius: 2px;
+  margin: 0 auto 18px;
+}
+#sidebar-welcome .welcome-stat {
   font-family: 'Special Elite', serif;
-  font-size: 0.7rem;
-  color: #888;
-  background: rgba(253,248,240,.85);
-  padding: 5px 10px;
-  border-radius: 3px;
-  pointer-events: none;
+  font-size: .78rem;
+  color: var(--gold);
+  letter-spacing: .3px;
 }
 </style>
 </head>
@@ -341,7 +368,15 @@ header {
         <div id="sidebar-meta"></div>
         <button id="close-btn" title="Close panel">✕</button>
       </div>
-      <div id="sidebar-body"></div>
+      <div id="sidebar-body">
+        <div id="sidebar-welcome">
+          <div class="welcome-icon">⚖️</div>
+          <h2>Click any state<br>to view cases</h2>
+          <div class="welcome-divider"></div>
+          <p>Pacific Legal Foundation is fighting for your rights in courts across America.</p>
+          <div class="welcome-stat" id="welcome-stat"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Legend -->
@@ -355,7 +390,6 @@ header {
       </div>
     </div>
 
-    <div id="hint">Click a state to view cases</div>
     <div id="geojson-error">
       <strong>Internet connection required</strong><br><br>
       This map loads US state boundaries from a CDN. Please ensure you're online.
@@ -386,6 +420,8 @@ const totalCases = Object.values(STATE_DATA).reduce((s, d) => s + d.count, 0);
 const maxCount   = Math.max(...Object.values(STATE_DATA).map(d => d.count));
 document.getElementById('total-badge').textContent = totalCases + ' Active Cases';
 document.getElementById('leg-max').textContent = maxCount;
+document.getElementById('welcome-stat').textContent =
+  totalCases + ' active cases across ' + Object.keys(STATE_DATA).length + ' states';
 
 // ── Map init ─────────────────────────────────────────────────────────────────
 const map = L.map('map', {
@@ -485,10 +521,23 @@ function openSidebar(stateName) {
   document.getElementById('hint').style.display = 'none';
 }
 
+function showWelcome() {
+  const body = document.getElementById('sidebar-body');
+  body.innerHTML = `
+    <div id="sidebar-welcome">
+      <div class="welcome-icon">⚖️</div>
+      <h2>Click any state<br>to view cases</h2>
+      <div class="welcome-divider"></div>
+      <p>Pacific Legal Foundation is fighting for your rights in courts across America.</p>
+      <div class="welcome-stat">${totalCases} active cases across ${Object.keys(STATE_DATA).length} states</div>
+    </div>`;
+  document.getElementById('sidebar-state').textContent = 'Select a State';
+  document.getElementById('sidebar-meta').textContent  = '';
+}
+
 document.getElementById('close-btn').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('hint').style.display = 'block';
   if (activeLayer) { geojsonLayer.resetStyle(activeLayer); activeLayer = null; }
+  showWelcome();
 });
 
 // ── GeoJSON layer ─────────────────────────────────────────────────────────────
